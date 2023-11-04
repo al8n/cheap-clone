@@ -1,37 +1,23 @@
 [package]
-name = "template-rs"
-version = "0.1.6"
+name = "cheap-clone"
+version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/al8n/template-rs"
-homepage = "https://github.com/al8n/template-rs"
-documentation = "https://docs.rs/template-rs"
-description = "A template for creating Rust open-source repo on GitHub"
+repository = "https://github.com/al8n/cheap-clone"
+homepage = "https://github.com/al8n/cheap-clone"
+documentation = "https://docs.rs/cheap-clone"
+description = "A trait which indicates that such type can be cloned cheaply."
 license = "MIT/Apache-2.0"
-rust-version = "1.73"
-
-[[bench]]
-path = "benches/foo.rs"
-name = "foo"
-harness = false
+rust-version = "1.56.0"
 
 [features]
 default = []
+alloc = []
+std = ["alloc"]
 
 [dependencies]
-
-[dev-dependencies]
-criterion = "0.5"
-tempfile = "3"
-
-[profile.bench]
-opt-level = 3
-debug = false
-codegen-units = 1
-lto = 'thin'
-incremental = false
-debug-assertions = false
-overflow-checks = false
-rpath = false
+bytes = { version = "1", default-features = false, optional = true }
+either = { version = "1", default-features = false, optional = true }
+smol_str = { version = "0.2", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true
