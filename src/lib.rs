@@ -26,18 +26,19 @@ macro_rules! impl_cheap_clone_for_copy {
   };
 }
 
-/// Things that are fast to clone in the context of an application such as Graph Node
+/// Things that are fast to clone in the context of an application.
 ///
 /// The purpose of this API is to reduce the number of calls to .clone() which need to
 /// be audited for performance.
 ///
-/// As a rule of thumb, only constant-time Clone impls should also implement CheapClone.
+/// As a rule of thumb, only constant-time `Clone` impls should also implement CheapClone.
 /// Eg:
 /// - ✔ [`Arc<T>`](alloc::sync::Arc)
 /// - ✔ [`Rc<T>`](alloc::rc::Rc)
 /// - ✔ [`Bytes`](bytes::Bytes)
 /// - ✗ [`Vec<T>`](alloc::vec::Vec)
 /// - ✔ [`SmolStr`](smol_str::SmolStr)
+/// - ✔ [`FastStr`](faststr::FastStr)
 /// - ✗ [`String`]
 pub trait CheapClone: Clone {
   /// Returns a copy of the value.
@@ -52,20 +53,23 @@ impl CheapClone for bytes::Bytes {}
 #[cfg(feature = "smol_str")]
 impl CheapClone for smol_str::SmolStr {}
 
+#[cfg(feature = "faststr")]
+impl CheapClone for faststr::FastStr {}
+
 #[cfg(feature = "alloc")]
 mod a {
   use super::CheapClone;
 
   impl<T: ?Sized> CheapClone for alloc::rc::Rc<T> {}
   impl<T: ?Sized> CheapClone for alloc::sync::Arc<T> {}
-  impl<T: ?Sized + CheapClone> CheapClone for alloc::boxed::Box<T> {}
+  impl<T: CheapClone> CheapClone for alloc::boxed::Box<T> {}
 }
 
 #[cfg(feature = "std")]
 mod s {
   use super::CheapClone;
 
-  impl<T: ?Sized + CheapClone> CheapClone for std::pin::Pin<T> {}
+  impl<T: CheapClone> CheapClone for std::pin::Pin<T> {}
 
   impl_cheap_clone_for_copy!(
     std::net::IpAddr,
