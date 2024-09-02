@@ -85,6 +85,8 @@ impl<T: CheapClone> CheapClone for Option<T> {}
 impl<T: CheapClone, E: CheapClone> CheapClone for Result<T, E> {}
 #[cfg(feature = "either")]
 impl<L: CheapClone, R: CheapClone> CheapClone for either::Either<L, R> {}
+#[cfg(feature = "among")]
+impl<L: CheapClone, M: CheapClone, R: CheapClone> CheapClone for among::Among<L, M, R> {}
 
 impl_cheap_clone_for_copy! {
   (),

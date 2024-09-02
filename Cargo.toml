@@ -1,6 +1,6 @@
 [package]
 name = "cheap-clone"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 repository = "https://github.com/al8n/cheap-clone"
 homepage = "https://github.com/al8n/cheap-clone"
@@ -17,6 +17,7 @@ std = ["alloc"]
 [dependencies]
 paste = "1"
 
+among = { version = "0.1", default-features = false, optional = true }
 bytes = { version = "1", default-features = false, optional = true }
 either = { version = "1", default-features = false, optional = true }
 smol_str = { version = "0.2", default-features = false, optional = true }
