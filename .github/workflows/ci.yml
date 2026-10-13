@@ -43,7 +43,7 @@ jobs:
           cargo +1.77.0 check --no-default-features --features alloc
       - name: Check pre-existing feature powerset
         run: >-
-          cargo +1.77.0 hack check --feature-powerset
+          cargo +1.77.0 hack check --feature-powerset --optional-deps --depth 2
           --exclude-features smol_bytes_0_1,smol_bytes
 
   smol-msrv:
