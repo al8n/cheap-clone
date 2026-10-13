@@ -7,7 +7,6 @@ A trait which indicates that such type can be cloned cheaply.
 
 [<img alt="github" src="https://img.shields.io/badge/github-al8n/cheap--clone-8da0cb?style=for-the-badge&logo=Github" height="22">][Github-url]
 [<img alt="Build" src="https://img.shields.io/github/actions/workflow/status/al8n/cheap-clone/ci.yml?logo=Github-Actions&style=for-the-badge" height="22">][CI-url]
-[<img alt="codecov" src="https://img.shields.io/codecov/c/gh/al8n/cheap-clone?style=for-the-badge&token=6R3QFWRWHL&logo=codecov" height="22">][codecov-url]
 
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-cheap--clone-66c2a5?style=for-the-badge&labelColor=555555&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K" height="20">][doc-url]
 [<img alt="crates.io" src="https://img.shields.io/crates/v/cheap-clone?style=for-the-badge&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE5LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc+DQoJPGc+DQoJCTxwYXRoIGQ9Ik0yNTYsMEwzMS41MjgsMTEyLjIzNnYyODcuNTI4TDI1Niw1MTJsMjI0LjQ3Mi0xMTIuMjM2VjExMi4yMzZMMjU2LDB6IE0yMzQuMjc3LDQ1Mi41NjRMNzQuOTc0LDM3Mi45MTNWMTYwLjgxDQoJCQlsMTU5LjMwMyw3OS42NTFWNDUyLjU2NHogTTEwMS44MjYsMTI1LjY2MkwyNTYsNDguNTc2bDE1NC4xNzQsNzcuMDg3TDI1NiwyMDIuNzQ5TDEwMS44MjYsMTI1LjY2MnogTTQzNy4wMjYsMzcyLjkxMw0KCQkJbC0xNTkuMzAzLDc5LjY1MVYyNDAuNDYxbDE1OS4zMDMtNzkuNjUxVjM3Mi45MTN6IiBmaWxsPSIjRkZGIi8+DQoJPC9nPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPC9zdmc+DQo=" height="22">][crates-url]
@@ -21,8 +20,27 @@ A trait which indicates that such type can be cloned cheaply.
 
 ```toml
 [dependencies]
-cheap-clone = "0.1"
+cheap-clone = "0.3"
 ```
+
+## Optional `smol-bytes` integration
+
+Enable `smol_bytes_0_1` (or its `smol_bytes` alias) to implement
+[`CheapClone`] for the fixed `Buffer` and `Utf8Buffer` types, plus the
+immutable `shared::{Bytes, Utf8Bytes}` and `compact::{Bytes, Utf8Bytes}`
+types. Mutable `BytesMut` and `Utf8BytesMut` types intentionally do not
+implement `CheapClone`.
+
+The base crate, its default configuration, `--no-default-features`, and the
+`alloc` configuration support Rust `1.85`. This is the honest base MSRV because
+Cargo must parse edition-2024 manifests from optional dependencies even when
+those features are inactive. The non-smol optional feature powerset is checked
+with Rust `1.89`.
+
+The `smol_bytes_0_1` integration (and its `smol_bytes` alias) follows
+`smol-bytes` and requires Rust `1.95`. The `smol_str_0_3` integration supports
+the `smol_str` `0.3` series, and `faststr_0_2` supports the `faststr` `0.2`
+series; optional integrations otherwise follow their upstream effective MSRV.
 
 #### License
 
@@ -31,10 +49,9 @@ Apache License (Version 2.0).
 
 See [LICENSE-APACHE](LICENSE-APACHE), [LICENSE-MIT](LICENSE-MIT) for details.
 
-Copyright (c) 2023 Al Liu.
+Copyright (c) 2025 Al Liu.
 
-[Github-url]: https://github.com/al8n/cheap-clone/
+[Github-url]: https://github.com/al8n/cheap-clone
 [CI-url]: https://github.com/al8n/cheap-clone/actions/workflows/ci.yml
 [doc-url]: https://docs.rs/cheap-clone
 [crates-url]: https://crates.io/crates/cheap-clone
-[codecov-url]: https://app.codecov.io/gh/al8n/cheap-clone/
