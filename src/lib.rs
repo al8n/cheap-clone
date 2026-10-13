@@ -10,7 +10,7 @@
 #[cfg(any(feature = "std", test))]
 extern crate std;
 
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
+#[cfg(all(not(any(feature = "std", test)), feature = "alloc"))]
 extern crate alloc as std;
 
 macro_rules! impl_cheap_clone_for_copy {
