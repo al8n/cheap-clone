@@ -36,8 +36,8 @@ macro_rules! impl_cheap_clone_for_copy {
 /// - ✔ [`Rc<T>`](std::rc::Rc)
 /// - ✔ [`Bytes`](bytes_1::Bytes)
 /// - ✗ [`Vec<T>`](std::vec::Vec)
-/// - ✔ [`SmolStr`](smol_str03::SmolStr)
-/// - ✔ [`FastStr`](faststr02::FastStr)
+/// - ✔ [`SmolStr`](smol_str_0_3::SmolStr)
+/// - ✔ [`FastStr`](faststr_0_2::FastStr)
 /// - ✗ [`String`]
 pub trait CheapClone: Clone {
   /// Returns a copy of the value.
@@ -61,6 +61,21 @@ impl CheapClone for smol_str_0_2::SmolStr {}
 #[cfg(feature = "faststr_0_2")]
 #[cfg_attr(docsrs, doc(cfg(feature = "faststr_0_2")))]
 impl CheapClone for faststr_0_2::FastStr {}
+
+#[cfg(feature = "smol_bytes_0_1")]
+#[cfg_attr(docsrs, doc(cfg(feature = "smol_bytes_0_1")))]
+impl_cheap_clone_for_copy!(smol_bytes_0_1::Buffer, smol_bytes_0_1::Utf8Buffer);
+
+#[cfg(feature = "smol_bytes_0_1")]
+#[cfg_attr(docsrs, doc(cfg(feature = "smol_bytes_0_1")))]
+mod smol_bytes_impl {
+  use super::CheapClone;
+
+  impl CheapClone for smol_bytes_0_1::shared::Bytes {}
+  impl CheapClone for smol_bytes_0_1::compact::Bytes {}
+  impl CheapClone for smol_bytes_0_1::shared::Utf8Bytes {}
+  impl CheapClone for smol_bytes_0_1::compact::Utf8Bytes {}
+}
 
 #[cfg(feature = "triomphe_0_1")]
 #[cfg_attr(docsrs, doc(cfg(feature = "triomphe_0_1")))]
