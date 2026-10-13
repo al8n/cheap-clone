@@ -7,3 +7,11 @@ https://github.com/al8n/layer0 at commit
 The extraction used `git subtree split --prefix=cheap-clone`. Relevant
 author, date, commit-message, and ancestry history was preserved as rewritten
 subtree commits; original commit IDs remain in `al8n/layer0`.
+
+## 0.3.2 MSRV notes
+
+The base crate, default configuration, `no-default-features`, and `alloc`
+configuration retain Rust `1.77`. Optional integrations follow their upstream
+effective MSRV: `smol_bytes_0_1` and `smol_bytes` require Rust `1.95`, while
+`smol_str_0_3` is bounded to `smol_str >=0.3.2, <0.3.4` for Cargo `1.77`
+manifest compatibility and downstream `SmolStr` type unification.

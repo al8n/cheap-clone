@@ -31,9 +31,16 @@ immutable `shared::{Bytes, Utf8Bytes}` and `compact::{Bytes, Utf8Bytes}`
 types. Mutable `BytesMut` and `Utf8BytesMut` types intentionally do not
 implement `CheapClone`.
 
-The base crate and its existing features retain the Rust `1.77` MSRV. The
-`smol_bytes_0_1` integration follows `smol-bytes` and raises the effective
-MSRV for builds enabling that feature to Rust `1.95`.
+The base crate, its default configuration, `--no-default-features`, and the
+`alloc` configuration support Rust `1.77`. Optional integrations follow the
+effective MSRV of their upstream crate. The `smol_bytes_0_1` integration (and
+its `smol_bytes` alias) follows `smol-bytes` and requires Rust `1.95`.
+
+The `smol_str_0_3` integration is bounded to `smol_str >=0.3.2, <0.3.4` so
+Cargo `1.77` can resolve a compatible manifest. If downstream code also names
+`smol_str`, keep it on the compatible `0.3.2` line so both dependencies use
+the same `SmolStr` type; independently resolved versions are distinct Rust
+types.
 
 #### License
 

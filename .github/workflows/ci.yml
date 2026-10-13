@@ -28,7 +28,7 @@ jobs:
         run: cargo fmt --all -- --check
 
   base-msrv:
-    name: base MSRV and feature powerset
+    name: base MSRV
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -41,9 +41,20 @@ jobs:
           cargo +1.77.0 check
           cargo +1.77.0 check --no-default-features
           cargo +1.77.0 check --no-default-features --features alloc
+          cargo +1.77.0 check --no-default-features --features smol_str_0_3
+
+  feature-powerset:
+    name: feature powerset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust 1.89
+        run: rustup toolchain install 1.89.0 --profile minimal --no-self-update
+      - name: Install cargo-hack
+        run: cargo +stable install --locked cargo-hack --version 0.6.39
       - name: Check pre-existing feature powerset
         run: >-
-          cargo +1.77.0 hack check --feature-powerset --optional-deps --depth 2
+          cargo +1.89.0 hack check --feature-powerset --optional-deps --depth 2
           --exclude-features smol_bytes_0_1,smol_bytes
 
   smol-msrv:

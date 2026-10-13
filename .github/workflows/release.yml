@@ -204,7 +204,7 @@ jobs:
             expected_prerelease=true
           fi
 
-          release_notes=$'- Replace the `paste` dependency with the maintained `pastey` package.\n- Add optional `smol-bytes` support; enabling it requires Rust 1.95.\n- Preserve the existing public API, default feature set, and Rust 1.77 base MSRV.'
+          release_notes=$'- Replace the `paste` dependency with the maintained `pastey` package.\n- Add optional `smol-bytes` support; enabling it requires Rust 1.95.\n- Preserve the existing public API and default feature set; the base, default, no-default, and alloc configurations support Rust 1.77. Optional integrations follow their upstream effective MSRV, with smol_str_0_3 bounded to smol_str >=0.3.2, <0.3.4.'
           encoded_tag="$(jq -rn --arg tag "${tag}" '$tag | @uri')"
           response_file="$(mktemp "${RUNNER_TEMP}/github-release.XXXXXX.json")"
           trap 'rm -f "${response_file}"' EXIT
