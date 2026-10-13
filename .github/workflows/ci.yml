@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -Dwarnings
+  RUSTDOCFLAGS: -Dwarnings
+
+jobs:
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust
+        run: rustup update stable --no-self-update && rustup default stable && rustup component add rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  base-msrv:
+    name: base MSRV and feature powerset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust 1.77
+        run: rustup toolchain install 1.77.0 --profile minimal --no-self-update
+      - name: Install cargo-hack
+        run: cargo +stable install --locked cargo-hack --version 0.6.39
+      - name: Check base configurations
+        run: |
+          cargo +1.77.0 check
+          cargo +1.77.0 check --no-default-features
+          cargo +1.77.0 check --no-default-features --features alloc
+      - name: Check pre-existing feature powerset
+        run: >-
+          cargo +1.77.0 hack check --feature-powerset
+          --exclude-features smol_bytes_0_1,smol_bytes
+
+  smol-msrv:
+    name: smol-bytes MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust 1.95
+        run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
+      - name: Check smol-bytes features
+        run: |
+          cargo +1.95.0 check --no-default-features --features smol_bytes_0_1
+          cargo +1.95.0 check --no-default-features --features smol_bytes
+          cargo +1.95.0 check --all-features
+
+  stable:
+    name: stable (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust
+        run: rustup update stable --no-self-update && rustup default stable && rustup component add clippy
+      - name: Run tests
+        run: |
+          cargo test
+          cargo test --all-features
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  bare-metal:
+    name: bare metal
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust targets
+        run: |
+          rustup toolchain install 1.77.0 --profile minimal --no-self-update
+          rustup toolchain install 1.95.0 --profile minimal --no-self-update
+          rustup target add --toolchain 1.77.0 thumbv7em-none-eabi
+          rustup target add --toolchain 1.95.0 thumbv7em-none-eabi
+      - name: Check base configurations
+        run: |
+          cargo +1.77.0 check --target thumbv7em-none-eabi --no-default-features
+          cargo +1.77.0 check --target thumbv7em-none-eabi --no-default-features --features alloc
+      - name: Check smol-bytes configurations
+        run: |
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol_bytes_0_1
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol_bytes
+
+  docs:
+    name: docs and doctests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust 1.95
+        run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
+      - name: Run doctests
+        run: cargo +1.95.0 test --all-features --doc
+      - name: Build documentation
+        run: cargo +1.95.0 doc --all-features --no-deps
+
+  release-readiness:
+    name: semver and package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install Rust 1.95
+        run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
+      - name: Install release validation tools
+        run: |
+          cargo +stable install --locked cargo-semver-checks --version 0.50.0
+          cargo +stable install --locked cargo-deny --version 0.19.9
+      - name: Check semver compatibility
+        run: >-
+          cargo +1.95.0 semver-checks check-release
+          --baseline-version 0.3.1 --release-type patch --all-features
+      - name: Check dependency advisories
+        run: cargo +1.95.0 deny --all-features check advisories
+      - name: Package crate
+        run: cargo +1.95.0 package --all-features
+      - name: Validate publish
+        run: cargo +1.95.0 publish --dry-run --all-features
