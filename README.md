@@ -32,21 +32,15 @@ types. Mutable `BytesMut` and `Utf8BytesMut` types intentionally do not
 implement `CheapClone`.
 
 The base crate, its default configuration, `--no-default-features`, and the
-`alloc` configuration support Rust `1.77`. Optional integrations follow the
-effective MSRV of their upstream crate. The `smol_bytes_0_1` integration (and
-its `smol_bytes` alias) follows `smol-bytes` and requires Rust `1.95`.
+`alloc` configuration support Rust `1.85`. This is the honest base MSRV because
+Cargo must parse edition-2024 manifests from optional dependencies even when
+those features are inactive. The non-smol optional feature powerset is checked
+with Rust `1.89`.
 
-The `smol_str_0_3` integration is bounded to `smol_str >=0.3.2, <0.3.4` so
-Cargo `1.77` can resolve a compatible manifest. If downstream code also names
-`smol_str`, keep it on the compatible `0.3.2` line so both dependencies use
-the same `SmolStr` type; independently resolved versions are distinct Rust
-types.
-
-The `faststr_0_2` integration is bounded to `faststr >=0.2.23, <0.2.24` so
-Cargo `1.77` avoids the later optional `rkyv` dependency chain. If downstream
-code also names `faststr`, keep it on the compatible `0.2.23` line so both
-dependencies use the same `FastStr` type; independently resolved versions
-are distinct Rust types.
+The `smol_bytes_0_1` integration (and its `smol_bytes` alias) follows
+`smol-bytes` and requires Rust `1.95`. The `smol_str_0_3` integration supports
+the `smol_str` `0.3` series, and `faststr_0_2` supports the `faststr` `0.2`
+series; optional integrations otherwise follow their upstream effective MSRV.
 
 #### License
 

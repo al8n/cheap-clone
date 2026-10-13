@@ -11,10 +11,8 @@ subtree commits; original commit IDs remain in `al8n/layer0`.
 ## 0.3.2 MSRV notes
 
 The base crate, default configuration, `no-default-features`, and `alloc`
-configuration retain Rust `1.77`. Optional integrations follow their upstream
-effective MSRV: `smol_bytes_0_1` and `smol_bytes` require Rust `1.95`, while
-`smol_str_0_3` is bounded to `smol_str >=0.3.2, <0.3.4` for Cargo `1.77`
-manifest compatibility and downstream `SmolStr` type unification.
-`faststr_0_2` is bounded to `faststr >=0.2.23, <0.2.24` to avoid the later
-optional `rkyv` chain while preserving Cargo `1.77` compatibility and
-downstream `FastStr` type unification.
+configuration require Rust `1.85`, because Cargo must parse edition-2024
+manifests from optional dependencies even when those features are inactive.
+The non-smol optional feature powerset is verified with Rust `1.89`.
+`smol_bytes_0_1` and `smol_bytes` require Rust `1.95`; the full `smol_str_0_3`
+`0.3` and `faststr_0_2` `0.2` dependency ranges are restored.
