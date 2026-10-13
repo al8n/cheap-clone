@@ -42,6 +42,12 @@ Cargo `1.77` can resolve a compatible manifest. If downstream code also names
 the same `SmolStr` type; independently resolved versions are distinct Rust
 types.
 
+The `faststr_0_2` integration is bounded to `faststr >=0.2.23, <0.2.24` so
+Cargo `1.77` avoids the later optional `rkyv` dependency chain. If downstream
+code also names `faststr`, keep it on the compatible `0.2.23` line so both
+dependencies use the same `FastStr` type; independently resolved versions
+are distinct Rust types.
+
 #### License
 
 `cheap-clone` is under the terms of both the MIT license and the

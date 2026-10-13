@@ -42,6 +42,8 @@ jobs:
           cargo +1.77.0 check --no-default-features
           cargo +1.77.0 check --no-default-features --features alloc
           cargo +1.77.0 check --no-default-features --features smol_str_0_3
+          cargo +1.77.0 check --no-default-features --features faststr_0_2
+          cargo +1.77.0 check --features std,faststr_0_2
 
   feature-powerset:
     name: feature powerset
