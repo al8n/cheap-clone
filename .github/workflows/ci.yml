@@ -25,7 +25,10 @@ jobs:
       - name: Install Rust
         run: rustup update stable --no-self-update && rustup default stable && rustup component add rustfmt
       - name: Check formatting
-        run: cargo fmt --all -- --check
+        run: |
+          cargo fmt --all -- --check
+          cargo fmt --manifest-path tests/fixtures/Cargo.toml --all -- --check
+          cargo fmt --manifest-path tests/fixtures/hostaddr/Cargo.toml --all -- --check
 
   base-msrv:
     name: base MSRV
@@ -41,6 +44,14 @@ jobs:
           cargo +1.85.0 check
           cargo +1.85.0 check --no-default-features
           cargo +1.85.0 check --no-default-features --features alloc
+          cargo +1.85.0 check --features derive
+          cargo +1.85.0 check --no-default-features --features derive
+          cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace
+      - name: Test cower on the base MSRV
+        run: |
+          cargo +1.85.0 test --no-default-features --features cower_0_1 --test cower
+          cargo +1.85.0 test --no-default-features --features alloc,cower --test cower
+          cargo +1.85.0 test --features cower,derive --test cower
 
   feature-powerset:
     name: feature powerset
@@ -51,10 +62,17 @@ jobs:
         run: rustup toolchain install 1.89.0 --profile minimal --no-self-update
       - name: Install cargo-hack
         run: cargo +stable install --locked cargo-hack --version 0.6.39
-      - name: Check pre-existing feature powerset
+      - name: Check Rust 1.89 canonical feature pairs
         run: >-
-          cargo +1.89.0 hack check --feature-powerset --optional-deps --depth 2
-          --exclude-features smol_bytes_0_1,smol_bytes
+          cargo +1.89.0 hack check --feature-powerset --depth 2
+          --exclude-features among,arcstr,bytes,chrono,cower,ecow,either,emailaddr,faststr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,http,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,smol_str,time,triomphe,uuid,smol-bytes_0_1,smol-bytes_0_2,smol-bytes,smol_bytes_0_1,smol_bytes
+      - name: Check address integrations
+        run: |
+          cargo +1.89.0 test --no-default-features --features emailaddr --test emailaddr
+          cargo +1.89.0 test --no-default-features --features alloc,emailaddr --test emailaddr
+          cargo +1.89.0 test --manifest-path tests/fixtures/hostaddr/Cargo.toml
+          cargo +1.89.0 test --manifest-path tests/fixtures/hostaddr/Cargo.toml --no-default-features
+          cargo +1.89.0 test --manifest-path tests/fixtures/hostaddr/Cargo.toml --no-default-features --features alloc
 
   smol-msrv:
     name: smol-bytes MSRV
@@ -65,9 +83,16 @@ jobs:
         run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
       - name: Check smol-bytes features
         run: |
+          cargo +1.95.0 check --no-default-features --features smol-bytes_0_1
+          cargo +1.95.0 check --no-default-features --features smol-bytes_0_2
+          cargo +1.95.0 check --no-default-features --features smol-bytes
           cargo +1.95.0 check --no-default-features --features smol_bytes_0_1
           cargo +1.95.0 check --no-default-features --features smol_bytes
           cargo +1.95.0 check --all-features
+      - name: Check each public feature and alias
+        run: |
+          cargo +stable install --locked cargo-hack --version 0.6.39
+          cargo +1.95.0 hack check --each-feature
 
   stable:
     name: stable (${{ matrix.os }})
@@ -86,9 +111,12 @@ jobs:
       - name: Run tests
         run: |
           cargo test
-          cargo test --all-features
+          cargo test --workspace --all-features
+          cargo test --no-default-features --features derive
+          cargo test --manifest-path tests/fixtures/Cargo.toml --workspace
+          cargo test --manifest-path tests/fixtures/hostaddr/Cargo.toml
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   bare-metal:
     name: bare metal
@@ -105,10 +133,20 @@ jobs:
         run: |
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features alloc
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features derive
+          cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace --target thumbv7em-none-eabi
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features cower
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features alloc,cower
       - name: Check smol-bytes configurations
         run: |
-          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol_bytes_0_1
-          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol_bytes
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol-bytes_0_1
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol-bytes_0_2
+      - name: Check no-std integrations
+        run: |
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features chrono,emailaddr,generic-array,generic-arraydeque,heapless,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,uuid
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features arcstr,chrono,ecow,emailaddr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,triomphe,uuid
+          cargo +1.95.0 check --manifest-path tests/fixtures/hostaddr/Cargo.toml --target thumbv7em-none-eabi --no-default-features
+          cargo +1.95.0 check --manifest-path tests/fixtures/hostaddr/Cargo.toml --target thumbv7em-none-eabi --no-default-features --features alloc
 
   docs:
     name: docs and doctests
@@ -118,9 +156,9 @@ jobs:
       - name: Install Rust 1.95
         run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
       - name: Run doctests
-        run: cargo +1.95.0 test --all-features --doc
+        run: cargo +1.95.0 test --workspace --all-features --doc
       - name: Build documentation
-        run: cargo +1.95.0 doc --all-features --no-deps
+        run: cargo +1.95.0 doc --workspace --all-features --no-deps
 
   release-readiness:
     name: semver and package
@@ -136,10 +174,10 @@ jobs:
       - name: Check semver compatibility
         run: >-
           cargo +1.95.0 semver-checks check-release
-          --baseline-version 0.3.1 --release-type patch --all-features
+          --baseline-version 0.3.1 --release-type major --all-features
       - name: Check dependency advisories
         run: cargo +1.95.0 deny --all-features check advisories
       - name: Package crate
-        run: cargo +1.95.0 package --all-features
+        run: cargo +1.95.0 package --workspace --all-features
       - name: Validate publish
-        run: cargo +1.95.0 publish --dry-run --all-features
+        run: cargo +1.95.0 publish --workspace --dry-run --all-features

@@ -1,33 +1,182 @@
 [package]
 name = "cheap-clone"
-version = "0.3.2"
-edition = "2021"
+version = "1.0.0"
+edition = "2024"
 repository = "https://github.com/al8n/cheap-clone"
-homepage = "https://github.com/al8n/cheap-clone"
 documentation = "https://docs.rs/cheap-clone"
-description = "A trait which indicates that such type can be cloned cheaply."
+description = "A trait which indicates that such a type can be cloned cheaply."
 license = "MIT OR Apache-2.0"
 rust-version = "1.85.0"
+exclude = ["patches/**"]
+
+[workspace]
+members = ["cheap-clone-derive"]
+exclude = ["tests/fixtures"]
+resolver = "3"
 
 [features]
 default = ["std"]
-alloc = []
-std = ["either?/default", "smol_str_0_3?/default", "smol_str_0_2?/default", "triomphe_0_1?/std", "faststr_0_2?/default", "smol_bytes_0_1?/std"]
-smol_bytes_0_1 = ["dep:smol_bytes_0_1", "smol_bytes_0_1/alloc", "alloc"]
+alloc = ["cower_0_1?/alloc", "emailaddr_1?/alloc", "hostaddr_1?/alloc", "jiff_1?/alloc"]
+derive = ["dep:cheap-clone-derive"]
+std = [
+  "among_1?/default",
+  "arcstr_1?/std",
+  "chrono_0_4?/std",
+  "cower_0_1?/std",
+  "ecow_0_3?/std",
+  "either_1?/default",
+  "emailaddr_1?/std",
+  "faststr_0_2?/default",
+  "generic-arraydeque_0_2?/std",
+  "hipstr_0_8?/std",
+  "hostaddr_1?/std",
+  "hybrid-arraydeque_0_1?/std",
+  "jiff_1?/std",
+  "rust_decimal_1?/std",
+  "smol_str_0_3?/default",
+  "smol_str_0_2?/default",
+  "smol-bytes_0_1?/std",
+  "smol-bytes_0_2?/std",
+  "time_0_3?/std",
+  "triomphe_0_1?/std",
+  "uuid_1?/std",
+]
+
+among_1 = ["dep:among_1"]
+among = ["among_1"]
+
+arcstr_1 = ["dep:arcstr_1", "alloc"]
+arcstr = ["arcstr_1"]
+
+bytes_1 = ["dep:bytes_1", "alloc"]
+bytes = ["bytes_1"]
+
+chrono_0_4 = ["dep:chrono_0_4"]
+chrono = ["chrono_0_4"]
+
+cower_0_1 = ["dep:cower_0_1"]
+cower = ["cower_0_1"]
+
+ecow_0_3 = ["dep:ecow_0_3", "alloc"]
+ecow = ["ecow_0_3"]
+
+either_1 = ["dep:either_1"]
+either = ["either_1"]
+
+emailaddr_1 = ["dep:emailaddr_1"]
+emailaddr = ["emailaddr_1"]
+
+faststr_0_2 = ["dep:faststr_0_2", "alloc"]
+faststr = ["faststr_0_2"]
+
+generic-array_1 = ["dep:generic-array_1"]
+generic-array = ["generic-array_1"]
+
+generic-arraydeque_0_2 = ["dep:generic-arraydeque_0_2"]
+generic-arraydeque = ["generic-arraydeque_0_2"]
+
+heapless_0_9 = ["dep:heapless_0_9"]
+heapless = ["heapless_0_9"]
+
+hipstr_0_8 = ["dep:hipstr_0_8", "alloc"]
+hipstr = ["hipstr_0_8"]
+
+# 1.1 removes hostaddr's reverse dependency and upstream trait implementations.
+hostaddr_1 = ["dep:hostaddr_1"]
+hostaddr = ["hostaddr_1"]
+
+hybrid-array_0_4 = ["dep:hybrid-array_0_4"]
+hybrid-array = ["hybrid-array_0_4"]
+
+hybrid-arraydeque_0_1 = ["dep:hybrid-arraydeque_0_1"]
+hybrid-arraydeque = ["hybrid-arraydeque_0_1"]
+
+# http currently requires std, even with its default features disabled.
+http_1 = ["dep:http_1", "std"]
+http = ["http_1"]
+
+jiff_1 = ["dep:jiff_1"]
+jiff = ["jiff_1"]
+
+rust_decimal_1 = ["dep:rust_decimal_1"]
+rust_decimal = ["rust_decimal_1"]
+
+smol_str_0_3 = ["dep:smol_str_0_3", "alloc"]
+smol_str_0_2 = ["dep:smol_str_0_2", "alloc"]
+smol_str = ["smol_str_0_3"]
+
+smol-bytes_0_1 = ["dep:smol-bytes_0_1", "smol-bytes_0_1/alloc", "alloc"]
+smol-bytes_0_2 = ["dep:smol-bytes_0_2", "smol-bytes_0_2/alloc", "alloc"]
+smol-bytes = ["smol-bytes_0_2"]
+# Preserve the original names and their 0.1-series meaning.
+smol_bytes_0_1 = ["smol-bytes_0_1"]
 smol_bytes = ["smol_bytes_0_1"]
 
+time_0_3 = ["dep:time_0_3"]
+time = ["time_0_3"]
+
+triomphe_0_1 = ["dep:triomphe_0_1", "alloc"]
+triomphe = ["triomphe_0_1"]
+
+uuid_1 = ["dep:uuid_1"]
+uuid = ["uuid_1"]
+
 [dependencies]
-paste = { package = "pastey", version = "0.2.3" }
+cheap-clone-derive = { version = "0.1", path = "cheap-clone-derive", optional = true }
+paste = { package = "pastey", version = "0.2" }
 seq-macro = "0.3"
 
-among = { version = "0.2", default-features = false, optional = true }
+among_1 = { package = "among", version = "1", default-features = false, optional = true }
+
+arcstr_1 = { package = "arcstr", version = "1.2", default-features = false, features = ["substr"], optional = true }
+
 bytes_1 = { package = "bytes", version = "1", default-features = false, optional = true }
-either = { version = "1", default-features = false, optional = true }
+
+chrono_0_4 = { package = "chrono", version = "0.4.42", default-features = false, optional = true }
+
+cower_0_1 = { package = "cower", version = "0.1.1", default-features = false, optional = true }
+
+ecow_0_3 = { package = "ecow", version = "0.3.1", default-features = false, optional = true }
+
+either_1 = { package = "either", version = "1", default-features = false, optional = true }
+
+emailaddr_1 = { package = "emailaddr", version = "1", default-features = false, optional = true }
+
+faststr_0_2 = { package = "faststr", version = "0.2", default-features = false, optional = true }
+
+generic-array_1 = { package = "generic-array", version = "1.4", default-features = false, optional = true }
+
+generic-arraydeque_0_2 = { package = "generic-arraydeque", version = "0.2", default-features = false, optional = true }
+
+heapless_0_9 = { package = "heapless", version = "0.9", default-features = false, optional = true }
+
+hipstr_0_8 = { package = "hipstr", version = "0.8", default-features = false, optional = true }
+
+hostaddr_1 = { package = "hostaddr", version = "1.1", default-features = false, optional = true }
+
+hybrid-array_0_4 = { package = "hybrid-array", version = "0.4", default-features = false, optional = true }
+
+hybrid-arraydeque_0_1 = { package = "hybrid-arraydeque", version = "0.1", default-features = false, optional = true }
+
+http_1 = { package = "http", version = "1.5", default-features = false, features = ["std"], optional = true }
+
+jiff_1 = { package = "jiff", version = "1", default-features = false, optional = true }
+
+rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = false, optional = true }
+
 smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
 smol_str_0_2 = { package = "smol_str", version = "0.2", default-features = false, optional = true }
+
+# Earlier releases use unmaintained paste; resolver 3 would otherwise prefer 0.1.3
+# for this crate's base MSRV, even when building with a newer toolchain.
+smol-bytes_0_1 = { package = "smol-bytes", version = "0.1.7", default-features = false, optional = true }
+smol-bytes_0_2 = { package = "smol-bytes", version = "0.2", default-features = false, optional = true }
+
+time_0_3 = { package = "time", version = "0.3.55", default-features = false, optional = true }
+
 triomphe_0_1 = { package = "triomphe", version = "0.1", default-features = false, optional = true }
-faststr_0_2 = { package = "faststr", version = "0.2", default-features = false, optional = true }
-smol_bytes_0_1 = { package = "smol-bytes", version = "0.1.7", default-features = false, optional = true }
+
+uuid_1 = { package = "uuid", version = "1", default-features = false, optional = true }
 
 [dev-dependencies]
 static_assertions = "1"
@@ -35,3 +184,9 @@ static_assertions = "1"
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.cargo-semver-checks.lints]
+# 0.50.0 treats the doc(hidden) __private re-export as sealing the original
+# public trait. Keep the diagnostic visible until that false positive is fixed.
+# The downstream manual implementation in tests/fixtures/renamed guards this API.
+trait_newly_sealed = "warn"

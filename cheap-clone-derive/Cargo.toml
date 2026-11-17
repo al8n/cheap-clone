@@ -1,0 +1,17 @@
+[package]
+name = "cheap-clone-derive"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85.0"
+description = "Derive macro for cheap-clone."
+repository = "https://github.com/al8n/cheap-clone"
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro-crate = "3.5"
+proc-macro2 = "1"
+quote = "1"
+syn = "2"
