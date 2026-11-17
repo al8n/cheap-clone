@@ -128,6 +128,12 @@ macro_rules! impl_cheap_clone_for_copy {
 /// - ✔ [`SmolStr`](smol_str_0_3::SmolStr)
 /// - ✔ [`FastStr`](faststr_0_2::FastStr)
 /// - ✗ [`String`]
+///
+/// Fixed-capacity inline containers follow the same policy as `[T; N]`: elements
+/// must be `Copy`, and the amount copied is bounded by the type's capacity. This
+/// is still O(N) for arrays and O(len) for occupied vector/string/deque contents;
+/// large capacities can be expensive. The optional `hipstr` integration also
+/// inherits upstream's deep-copy fallback on reference-count overflow.
 pub trait CheapClone: Clone {
   /// Returns a copy of the value.
   fn cheap_clone(&self) -> Self {
@@ -139,6 +145,8 @@ pub trait CheapClone: Clone {
 pub mod __private {
   pub use super::CheapClone;
 }
+
+mod integrations;
 
 #[cfg(feature = "bytes_1")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bytes_1")))]
@@ -192,7 +200,15 @@ const _: () = {
 
 #[cfg(feature = "triomphe_0_1")]
 #[cfg_attr(docsrs, doc(cfg(feature = "triomphe_0_1")))]
-impl<T> CheapClone for triomphe_0_1::Arc<T> {}
+const _: () = {
+  use triomphe_0_1::{Arc, ArcBorrow, ArcUnion, OffsetArc, ThinArc};
+
+  impl<T: ?Sized> CheapClone for Arc<T> {}
+  impl<T: ?Sized> CheapClone for ArcBorrow<'_, T> {}
+  impl<T: ?Sized> CheapClone for OffsetArc<T> {}
+  impl<H, T> CheapClone for ThinArc<H, T> {}
+  impl<A, B> CheapClone for ArcUnion<A, B> {}
+};
 
 #[cfg(feature = "either_1")]
 const _: () = {
@@ -228,8 +244,39 @@ const _: () = {
 #[cfg(any(feature = "alloc", feature = "std"))]
 const _: () = {
   impl<T: ?Sized> CheapClone for std::rc::Rc<T> {}
+  impl<T: ?Sized> CheapClone for std::rc::Weak<T> {}
   impl<T: ?Sized> CheapClone for std::sync::Arc<T> {}
+  impl<T: ?Sized> CheapClone for std::sync::Weak<T> {}
 };
+
+impl<T: ?Sized> CheapClone for core::marker::PhantomData<T> {
+  fn cheap_clone(&self) -> Self {
+    *self
+  }
+}
+
+impl_cheap_clone_for_copy!(
+  core::marker::PhantomPinned,
+  core::time::Duration,
+  core::cmp::Ordering,
+);
+
+#[cfg(feature = "std")]
+const _: () = {
+  impl_cheap_clone_for_copy!(std::time::Instant, std::time::SystemTime);
+};
+
+impl<T: CheapClone> CheapClone for core::num::Wrapping<T> {
+  fn cheap_clone(&self) -> Self {
+    Self(self.0.cheap_clone())
+  }
+}
+
+impl<T: CheapClone> CheapClone for core::num::Saturating<T> {
+  fn cheap_clone(&self) -> Self {
+    Self(self.0.cheap_clone())
+  }
+}
 
 impl<T: CheapClone> CheapClone for core::pin::Pin<T> {}
 
@@ -280,8 +327,7 @@ impl_cheap_clone_for_copy! {
   core::num::NonZeroU32,
   core::num::NonZeroU64,
   core::num::NonZeroU128,
-  core::num::NonZeroUsize,
-  &str
+  core::num::NonZeroUsize
 }
 
 impl<T: Copy, const N: usize> CheapClone for [T; N] {
@@ -290,7 +336,7 @@ impl<T: Copy, const N: usize> CheapClone for [T; N] {
   }
 }
 
-impl<T> CheapClone for &T {
+impl<T: ?Sized> CheapClone for &T {
   fn cheap_clone(&self) -> Self {
     self
   }

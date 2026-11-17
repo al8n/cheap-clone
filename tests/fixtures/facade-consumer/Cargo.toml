@@ -1,0 +1,8 @@
+[package]
+name = "cheap-clone-facade-consumer-test"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+path = { package = "cheap-clone-facade-test", path = "../facade" }

@@ -1,0 +1,191 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 453ffaf..f237f2b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,19 @@
+ # Unreleased
+ 
++## 1.1.0
++
++### CheapClone integration migration
++
++- Remove the optional `cheap-clone` dependency, its feature and storage-feature
++  forwarding, and the `CheapClone` implementations from this crate.
++- Enable the integration in `cheap-clone` 1.0 instead:
++  `cheap-clone = { version = "1", features = ["hostaddr"] }` together with
++  `hostaddr = "1.1"`.
++- This intentionally removes the old feature and the 0.3 trait implementations.
++  Consumers using them must update their manifests and trait bounds; retaining
++  the old feature name as a forward would introduce a circular dependency.
++- Publish this version before `cheap-clone` 1.0, which requires `hostaddr >= 1.1`.
++
+ ## 1.0.0-rc.2 (2026-10-08)
+ 
+ > Published release candidate. The final `1.0.0` release remains subject to
+diff --git a/Cargo.toml b/Cargo.toml
+index 8e8c2bd..56c8580 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "hostaddr"
+-version = "1.0.0-rc.2"
++version = "1.1.0"
+ edition = "2021"
+ repository = "https://github.com/al8n/hostaddr"
+ documentation = "https://docs.rs/hostaddr"
+@@ -21,7 +21,6 @@ alloc = [
+   "memchr/alloc",
+   "serde?/alloc",
+   "tinyvec_1?/alloc",
+-  "cheap-clone?/alloc",
+ ]
+ std = [
+   "alloc",
+@@ -36,14 +35,13 @@ std = [
+   "triomphe_0_1?/default",
+   "bytes_1?/default",
+   "tinyvec_1?/default",
+-  "cheap-clone?/default",
+ ]
+ 
+-smol_str_0_3 = ["dep:smol_str_0_3", "cheap-clone?/smol_str_0_3", "alloc"]
++smol_str_0_3 = ["dep:smol_str_0_3", "alloc"]
+ smol_str = ["smol_str_0_3"]
+-triomphe_0_1 = ["dep:triomphe_0_1", "cheap-clone?/triomphe_0_1", "alloc"]
++triomphe_0_1 = ["dep:triomphe_0_1", "alloc"]
+ triomphe = ["triomphe_0_1"]
+-bytes_1 = ["dep:bytes_1", "cheap-clone?/bytes_1", "alloc"]
++bytes_1 = ["dep:bytes_1", "alloc"]
+ bytes = ["bytes_1"]
+ tinyvec_1 = ["dep:tinyvec_1", "alloc"]
+ tinyvec = ["tinyvec_1"]
+@@ -70,7 +68,6 @@ memchr = { version = "2", default-features = false }
+ percent-encoding = { version = "2", default-features = false }
+ simdutf8 = { version = "0.1", default-features = false }
+ thiserror = { version = "2", default-features = false }
+-cheap-clone = { version = "0.3", default-features = false, optional = true }
+ 
+ idna = { version = "1", default-features = false, optional = true }
+ getrandom = { version = "0.4", default-features = false, optional = true }
+diff --git a/README.md b/README.md
+index 944bb64..99ea738 100644
+--- a/README.md
++++ b/README.md
+@@ -36,22 +36,10 @@ them as identity keys when that is the desired policy.
+ 
+ ## Release status
+ 
+-The latest published pre-release is `1.0.0-rc.2` (2026-10-08). This release
+-candidate is intended for downstream validation before the final `1.0.0`
+-contract is frozen.
+-
+-The `1.0.0` release will:
+-
+-- freeze the validated host/address and IPC taxonomy APIs;
+-- require Rust `1.89` or newer;
+-- keep `no_std`/`no-alloc` and `alloc` feature combinations buildable; and
+-- document the Serde representation and compatibility policy;
+-- validate ASCII `xn--` A-labels through UTS46 on allocating entry points; and
+-- preserve the stack-only structural behavior of `try_from_ascii_*` and
+-  `verify_ascii_domain`.
+-
+-Until `1.0.0` is released, downstream users should treat the `1.0` line as
+-pre-release and report compatibility findings against `1.0.0-rc.2`.
++Version `1.1.0` moves `CheapClone` support to `cheap-clone` 1.0. The old
++`hostaddr/cheap-clone` feature and dependency are removed; see the migration
++instructions below. Rust `1.89` remains the minimum supported version, with
++`no_std`/no-allocation and `alloc` configurations supported.
+ 
+ ## Features
+ 
+@@ -72,11 +60,9 @@ pre-release and report compatibility findings against `1.0.0-rc.2`.
+ 
+ ```toml
+ [dependencies]
+-hostaddr = "=1.0.0-rc.2"
++hostaddr = "1.1"
+ ```
+ 
+-The stable `0.3.x` line remains available as `hostaddr = "0.3"`.
+-
+ ### Feature Flags
+ 
+ | Feature | Description |
+@@ -87,7 +73,6 @@ The stable `0.3.x` line remains available as `hostaddr = "0.3"`.
+ | **`serde`** | Serialize/deserialize support |
+ | **`arbitrary`** | Fuzzing with `arbitrary` crate |
+ | **`quickcheck`** | Property-based generators for host builds; also compile-checked for wasm with the `wasm_js` backend |
+-| **`cheap-clone`** | `CheapClone` trait for smart pointer types |
+ | **`smol_str`** | `SmolStr` storage support |
+ | **`bytes`** | `Bytes` storage support |
+ | **`triomphe`** | `triomphe::Arc` storage support |
+@@ -97,6 +82,26 @@ The stable `0.3.x` line remains available as `hostaddr = "0.3"`.
+ Only the features listed in this table are public. The old implicit `idna`
+ feature was removed; enable `alloc` or `std` to use the crate's IDNA support.
+ 
++### CheapClone support
++
++Enable this integration on `cheap-clone`, which now owns the implementations:
++
++```toml
++hostaddr = "1.1"
++cheap-clone = { version = "1", features = ["hostaddr"] }
++```
++
++Remove `features = ["cheap-clone"]` from the `hostaddr` dependency and migrate
++uses of the 0.3 trait to `cheap-clone` 1.0. Both crates must be upgraded together
++when this integration is used. Shared storage such as `Arc<str>`, borrowed
++storage, and the fixed-size `Buffer` are supported; generic storage must
++implement `CheapClone`. Enable matching `cheap-clone` storage features when
++using `Bytes`, `SmolStr`, or `triomphe::Arc`.
++
++For no-allocation configurations, set `default-features = false` on both
++dependencies. Enable `alloc` on both when allocating storage is needed without
++`std`.
++
+ ## Quick Start
+ 
+ ```rust
+diff --git a/src/addr/mod.rs b/src/addr/mod.rs
+index 2c85c71..7762bdb 100644
+--- a/src/addr/mod.rs
++++ b/src/addr/mod.rs
+@@ -85,9 +85,6 @@ where
+   }
+ }
+ 
+-#[cfg(feature = "cheap-clone")]
+-impl<S: cheap_clone::CheapClone> cheap_clone::CheapClone for HostAddr<S> {}
+-
+ impl<S> core::fmt::Display for HostAddr<S>
+ where
+   S: core::fmt::Display,
+diff --git a/src/domain/mod.rs b/src/domain/mod.rs
+index b5e9e26..8766ef4 100644
+--- a/src/domain/mod.rs
++++ b/src/domain/mod.rs
+@@ -1106,9 +1106,6 @@ const _: () = {
+   from_domain_buffer!(Bytes => as_bytes::copy_from_slice);
+ };
+ 
+-#[cfg(feature = "cheap-clone")]
+-impl<S: cheap_clone::CheapClone> cheap_clone::CheapClone for Domain<S> {}
+-
+ #[cfg(all(feature = "tinyvec_1", any(feature = "std", feature = "alloc")))]
+ const _: () = {
+   use tinyvec_1::TinyVec;
+diff --git a/src/host/mod.rs b/src/host/mod.rs
+index 5aa6a46..d7cccdb 100644
+--- a/src/host/mod.rs
++++ b/src/host/mod.rs
+@@ -70,9 +70,6 @@ where
+   }
+ }
+ 
+-#[cfg(feature = "cheap-clone")]
+-impl<S: cheap_clone::CheapClone> cheap_clone::CheapClone for Host<S> {}
+-
+ impl<'a> Host<&'a str> {
+   /// Parses an ASCII [`Host`] from `&str`.
+   ///

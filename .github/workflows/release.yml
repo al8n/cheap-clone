@@ -40,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_version="0.3.2"
+          expected_version="1.0.0"
           package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
           if [[ "${package_version}" != "${expected_version}" ]]; then
             echo "::error::Expected package version ${expected_version}, found ${package_version}" >&2
@@ -77,7 +77,7 @@ jobs:
       - name: Check semver compatibility
         run: >-
           cargo +1.95.0 semver-checks check-release
-          --baseline-version 0.3.1 --release-type patch --all-features
+          --baseline-version 0.3.1 --release-type major --all-features
       - name: Check dependency advisories
         run: cargo +1.95.0 deny --all-features check advisories
       - name: Package crate
@@ -103,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_version="0.3.2"
+          expected_version="1.0.0"
           package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
           if [[ "${package_version}" != "${expected_version}" || "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
             echo "::error::Release tag and package version do not match v${expected_version}" >&2
@@ -124,59 +124,68 @@ jobs:
         run: |
           set -euo pipefail
 
-          package_name="cheap-clone"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
-          encoded_version="$(jq -rn --arg version "${package_version}" '$version | @uri')"
+          metadata="$(cargo +1.95.0 metadata --no-deps --format-version=1)"
           response_file="$(mktemp "${RUNNER_TEMP}/crates-io-cheap-clone.XXXXXX.json")"
           trap 'rm -f "${response_file}"' EXIT
 
-          if ! http_status="$(
-            curl --silent --show-error --location \
-              --output "${response_file}" \
-              --write-out '%{http_code}' \
-              --user-agent "cheap-clone-release-workflow/${GITHUB_RUN_ID}" \
-              "https://crates.io/api/v1/crates/${package_name}/${encoded_version}"
-          )"; then
-            echo "::error::Failed to query crates.io publication state" >&2
-            exit 1
-          fi
+          for package_name in cheap-clone-derive cheap-clone; do
+            package_version="$(jq -r --arg name "${package_name}" '.packages[] | select(.name == $name) | .version' <<<"${metadata}")"
+            encoded_version="$(jq -rn --arg version "${package_version}" '$version | @uri')"
+            output_key="${package_name//-/_}_already_published"
 
-          case "${http_status}" in
-            404)
-              echo "already_published=false" >>"${GITHUB_OUTPUT}"
-              ;;
-            200)
-              if ! jq -e \
-                --arg version "${package_version}" \
-                --arg repository "${GITHUB_REPOSITORY}" \
-                --arg sha "${GITHUB_SHA}" \
-                '
-                  .version.num == $version
-                  and .version.trustpub_data.provider == "github"
-                  and .version.trustpub_data.repository == $repository
-                  and .version.trustpub_data.sha == $sha
-                  and .version.yanked == false
-                ' \
-                "${response_file}" >/dev/null; then
-                echo "::error::Published crate metadata does not match this repository and commit" >&2
-                exit 1
-              fi
-
-              echo "already_published=true" >>"${GITHUB_OUTPUT}"
-              echo "${package_name} ${package_version} is already published by this repository at this commit"
-              ;;
-            *)
-              echo "::error::Unexpected crates.io HTTP status ${http_status}" >&2
+            if ! http_status="$(
+              curl --silent --show-error --location \
+                --output "${response_file}" \
+                --write-out '%{http_code}' \
+                --user-agent "cheap-clone-release-workflow/${GITHUB_RUN_ID}" \
+                "https://crates.io/api/v1/crates/${package_name}/${encoded_version}"
+            )"; then
+              echo "::error::Failed to query ${package_name} publication state" >&2
               exit 1
-              ;;
-          esac
+            fi
+
+            case "${http_status}" in
+              404)
+                echo "${output_key}=false" >>"${GITHUB_OUTPUT}"
+                ;;
+              200)
+                if ! jq -e \
+                  --arg version "${package_version}" \
+                  --arg repository "${GITHUB_REPOSITORY}" \
+                  --arg sha "${GITHUB_SHA}" \
+                  '
+                    .version.num == $version
+                    and .version.trustpub_data.provider == "github"
+                    and .version.trustpub_data.repository == $repository
+                    and .version.trustpub_data.sha == $sha
+                    and .version.yanked == false
+                  ' \
+                  "${response_file}" >/dev/null; then
+                  echo "::error::Published ${package_name} metadata does not match this repository and commit" >&2
+                  exit 1
+                fi
+
+                echo "${output_key}=true" >>"${GITHUB_OUTPUT}"
+                echo "${package_name} ${package_version} is already published at this commit"
+                ;;
+              *)
+                echo "::error::Unexpected crates.io HTTP status ${http_status} for ${package_name}" >&2
+                exit 1
+                ;;
+            esac
+          done
       - name: Authenticate with crates.io
         id: crates-io-auth
-        if: ${{ steps.publication_state.outputs.already_published == 'false' }}
+        if: ${{ steps.publication_state.outputs.cheap_clone_derive_already_published == 'false' || steps.publication_state.outputs.cheap_clone_already_published == 'false' }}
         uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18
+      - name: Publish cheap-clone-derive
+        if: ${{ steps.publication_state.outputs.cheap_clone_derive_already_published == 'false' }}
+        run: cargo +1.95.0 publish -p cheap-clone-derive --no-verify
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
       - name: Publish cheap-clone
-        if: ${{ steps.publication_state.outputs.already_published == 'false' }}
-        run: cargo +1.95.0 publish --no-verify
+        if: ${{ steps.publication_state.outputs.cheap_clone_already_published == 'false' }}
+        run: cargo +1.95.0 publish -p cheap-clone --all-features --no-verify
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
 
@@ -188,6 +197,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Verify or create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -204,7 +214,7 @@ jobs:
             expected_prerelease=true
           fi
 
-          release_notes=$'- Replace the `paste` dependency with the maintained `pastey` package.\n- Add optional `smol-bytes` support; enabling it requires Rust 1.95.\n- Preserve the existing public API and default feature set; the base, default, no-default, and alloc configurations support Rust 1.85 because Cargo must parse edition-2024 optional manifests. The non-smol feature powerset is verified with Rust 1.89, smol-bytes requires Rust 1.95, and the full smol_str 0.3 and faststr 0.2 ranges are restored.'
+          release_notes="$(cat RELEASE.md)"
           encoded_tag="$(jq -rn --arg tag "${tag}" '$tag | @uri')"
           response_file="$(mktemp "${RUNNER_TEMP}/github-release.XXXXXX.json")"
           trap 'rm -f "${response_file}"' EXIT

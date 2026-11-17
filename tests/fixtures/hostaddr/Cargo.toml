@@ -1,0 +1,21 @@
+[package]
+name = "cheap-clone-hostaddr-fixture"
+version = "0.0.0"
+edition = "2021"
+publish = false
+rust-version = "1.89"
+
+[workspace]
+
+[features]
+default = ["std"]
+alloc = ["cheap-clone/alloc", "hostaddr/alloc"]
+std = ["cheap-clone/std", "hostaddr/std"]
+
+[dependencies]
+cheap-clone = { path = "../../..", default-features = false, features = ["hostaddr", "derive"] }
+hostaddr = { version = "1.1", default-features = false }
+
+[dev-dependencies]
+static_assertions = "1"
+
