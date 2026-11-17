@@ -7,6 +7,8 @@ documentation = "https://docs.rs/cheap-clone"
 description = "A trait which indicates that such a type can be cloned cheaply."
 license = "MIT OR Apache-2.0"
 rust-version = "1.85.0"
+keywords = ["implicit-clone", "cheap-clone", "clone", "derive", "no-std"]
+categories = ["development-tools", "rust-patterns", "no-std"]
 exclude = ["patches/**"]
 
 [workspace]

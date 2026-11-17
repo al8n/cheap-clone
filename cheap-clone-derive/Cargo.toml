@@ -8,6 +8,8 @@ repository = "https://github.com/al8n/cheap-clone"
 documentation = "https://docs.rs/cheap-clone"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
+keywords = ["cheap-clone", "clone", "derive", "proc-macro", "implicit-clone"]
+categories = ["development-tools", "rust-patterns"]
 
 [lib]
 proc-macro = true
