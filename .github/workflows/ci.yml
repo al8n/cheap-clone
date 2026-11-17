@@ -47,6 +47,8 @@ jobs:
           cargo +1.85.0 check --features derive
           cargo +1.85.0 check --no-default-features --features derive
           cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace
+      - name: Test derive on the base MSRV
+        run: cargo +1.85.0 test --workspace --no-default-features --features derive
       - name: Test cower on the base MSRV
         run: |
           cargo +1.85.0 test --no-default-features --features cower_0_1 --test cower
@@ -65,7 +67,7 @@ jobs:
       - name: Check Rust 1.89 canonical feature pairs
         run: >-
           cargo +1.89.0 hack check --feature-powerset --depth 2
-          --exclude-features among,arcstr,bytes,chrono,cower,ecow,either,emailaddr,faststr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,http,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,smol_str,time,triomphe,uuid,smol-bytes_0_1,smol-bytes_0_2,smol-bytes,smol_bytes_0_1,smol_bytes
+          --exclude-features among,arcstr,bytes,cower,ecow,either,emailaddr,faststr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,http,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,smol_str,time,triomphe,uuid,smol-bytes_0_1,smol-bytes_0_2,smol-bytes,smol_bytes_0_1,smol_bytes
       - name: Check address integrations
         run: |
           cargo +1.89.0 test --no-default-features --features emailaddr --test emailaddr
@@ -143,8 +145,8 @@ jobs:
           cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol-bytes_0_2
       - name: Check no-std integrations
         run: |
-          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features chrono,emailaddr,generic-array,generic-arraydeque,heapless,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,uuid
-          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features arcstr,chrono,ecow,emailaddr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,triomphe,uuid
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features emailaddr,generic-array,generic-arraydeque,heapless,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,uuid
+          cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features arcstr,ecow,emailaddr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,time,triomphe,uuid
           cargo +1.95.0 check --manifest-path tests/fixtures/hostaddr/Cargo.toml --target thumbv7em-none-eabi --no-default-features
           cargo +1.95.0 check --manifest-path tests/fixtures/hostaddr/Cargo.toml --target thumbv7em-none-eabi --no-default-features --features alloc
 

@@ -117,7 +117,6 @@ Integrations are opt-in. Each versioned feature has a short alias:
 | `among_1` | `among` | `Among<L, M, R>` with `CheapClone` fields |
 | `arcstr_1` | `arcstr` | `ArcStr`, `Substr` |
 | `bytes_1` | `bytes` | Immutable `Bytes` |
-| `chrono_0_4` | `chrono` | `NaiveDate`, `NaiveTime`, `NaiveDateTime`, `DateTime<Tz>`, `TimeDelta`/`Duration`, `FixedOffset`, `Utc`, `Weekday`, `Month`, `Days`, `Months` |
 | `cower_0_1` | `cower` | `Cow<'a, T, P>` with `T::Storage<'a>: CheapClone`; `CowRepr<'a, T, P>` with `T::Owned: CheapClone` |
 | `ecow_0_3` | `ecow` | `EcoString`, `EcoBytes`, `EcoVec<T: Clone>` |
 | `either_1` | `either` | `Either<L, R>` with `CheapClone` fields |

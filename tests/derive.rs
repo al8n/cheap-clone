@@ -38,6 +38,8 @@ static_assertions::assert_impl_all!(Never: cheap_clone::CheapClone);
 
 #[test]
 fn all_struct_and_enum_shapes() {
+  let never: Option<Never> = None;
+  assert!(cheap_clone::CheapClone::cheap_clone(&never).is_none());
   let value = Named {
     id: 42,
     r#type: true,
@@ -238,6 +240,7 @@ impl<T: Source> Clone for Associated<T> {
 
 #[test]
 fn generics_lifetimes_const_generics_and_associated_types() {
+  assert_eq!(cheap_clone::CheapClone::cheap_clone(&Generic(3u32)).0, 3);
   assert_eq!(GenericCustom(1u8).cheap_clone().0, 1);
   let name = String::from("packet");
   let packet = Packet {
