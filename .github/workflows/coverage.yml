@@ -1,0 +1,92 @@
+name: coverage
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep cargo-llvm-cov and the external fixture workspaces in the same profile directory.
+  CARGO_LLVM_COV_TARGET_DIR: ${{ github.workspace }}/target/llvm-cov-target
+  RUST_BACKTRACE: 1
+
+jobs:
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      # Doctest coverage requires nightly rustdoc instrumentation.
+      - name: Install Rust and LLVM tools
+        run: rustup toolchain install nightly --profile minimal --component llvm-tools-preview --no-self-update
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2.90.5
+        with:
+          tool: cargo-llvm-cov@0.8.7
+      # --no-report accumulates profiles; clean once before the first configuration.
+      - name: Reset coverage profiles
+        run: cargo +nightly llvm-cov clean --workspace
+      - name: Cover core and integrations with allocation-dependent behavior
+        run: cargo +nightly llvm-cov --workspace --no-report --doctests --no-default-features --features derive,cower,emailaddr,hostaddr
+      - name: Cover alloc without std
+        run: cargo +nightly llvm-cov --workspace --no-report --doctests --no-default-features --features alloc,derive,cower,emailaddr,hostaddr
+      - name: Cover all features
+        run: cargo +nightly llvm-cov --workspace --no-report --doctests --all-features
+      - name: Cover downstream fixtures
+        shell: bash
+        run: |
+          export CARGO_TARGET_DIR="$CARGO_LLVM_COV_TARGET_DIR"
+          cargo +nightly llvm-cov show-env --sh > "$RUNNER_TEMP/cheap-clone-coverage-env.sh"
+          # shellcheck source=/dev/null
+          source "$RUNNER_TEMP/cheap-clone-coverage-env.sh"
+          cargo +nightly test --manifest-path tests/fixtures/Cargo.toml --workspace
+          cargo +nightly test --manifest-path tests/fixtures/hostaddr/Cargo.toml
+          cargo +nightly test --manifest-path tests/fixtures/hostaddr/Cargo.toml --no-default-features
+          cargo +nightly test --manifest-path tests/fixtures/hostaddr/Cargo.toml --no-default-features --features alloc
+      - name: Generate coverage reports
+        run: |
+          mkdir -p target/coverage
+          cargo +nightly llvm-cov report -p cheap-clone -p cheap-clone-derive --doctests --ignore-filename-regex '/tests/' --lcov --output-path target/coverage/lcov.info
+          cargo +nightly llvm-cov report -p cheap-clone -p cheap-clone-derive --doctests --ignore-filename-regex '/tests/' --html --output-dir target/coverage
+          cargo +nightly llvm-cov report -p cheap-clone -p cheap-clone-derive --doctests --ignore-filename-regex '/tests/' --color never | tee target/coverage/summary.txt
+          test -s target/coverage/lcov.info
+          grep -Fxq "SF:$GITHUB_WORKSPACE/src/lib.rs" target/coverage/lcov.info
+          grep -Fxq "SF:$GITHUB_WORKSPACE/cheap-clone-derive/src/lib.rs" target/coverage/lcov.info
+      - name: Add coverage to the job summary
+        run: |
+          {
+            echo '### Coverage across core, alloc, and all features'
+            echo '```text'
+            cat target/coverage/summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain coverage reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-report
+          path: target/coverage/
+          if-no-files-found: error
+      - name: Upload to Codecov
+        # Dependabot has no OIDC write permission; its reports remain in the artifact.
+        if: github.actor != 'dependabot[bot]'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          # Public fork PRs use tokenless uploads because they cannot obtain an OIDC token.
+          use_oidc: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          files: target/coverage/lcov.info
+          disable_search: true
+          fail_ci_if_error: true

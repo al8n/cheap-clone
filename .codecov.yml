@@ -1,0 +1,16 @@
+# Report coverage changes without imposing a minimum coverage requirement.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        informational: true
+    patch:
+      default:
+        target: auto
+        informational: true
+
+ignore:
+  - "tests/**"
+
+comment: false
