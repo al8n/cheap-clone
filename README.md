@@ -3,7 +3,7 @@
 </div>
 <div align="center">
 
-A trait which indicates that such type can be cloned cheaply.
+A trait that indicates that such a type can be cloned cheaply.
 
 [<img alt="github" src="https://img.shields.io/badge/github-al8n/cheap--clone-8da0cb?style=for-the-badge&logo=Github" height="22">][Github-url]
 <img alt="LoC" src="https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Fal8n%2F327b2a8aef9003246e45c6e47fe63937%2Fraw%2Fcheap-clone" height="22">
@@ -142,94 +142,6 @@ Integrations are opt-in. Each versioned feature has a short alias:
 ```toml
 cheap-clone = { version = "1", features = ["derive", "arcstr", "jiff", "uuid"] }
 ```
-
-All optional dependencies disable upstream default features. The `arcstr`
-integration enables `substr`. The `http` integration requires and enables
-`std`. Other new integrations work without `std`; shared-storage integrations
-also enable `alloc`. The `alloc` and `std` features forward the corresponding
-cower, emailaddr, hostaddr and Jiff capabilities. Jiff's system time zone
-discovery and time zone database, Chrono's clock/local-zone features, UUID
-generators, and serialization features are left to the consuming application.
-
-The `cower` integration requires **cower 0.1.1 or newer in the 0.1 series**,
-which lowers its base MSRV to Rust 1.85, without requiring `std` or `alloc`.
-`Cow` delegates to its actual storage's `cheap_clone`; `CowRepr`
-preserves borrows and calls `cheap_clone` on owned values. Neither the borrowed
-type nor the policy needs to implement `Clone` or `CheapClone`.
-`StaticPolicy` works in every configuration. Custom policies using `CowRepr`
-work when their owned storage implements `CheapClone`, including `Arc`, `Rc`,
-and supported shared strings or fixed-capacity containers. Enable the relevant
-features in both crates when using cower's built-in third-party policies.
-The default policy uses cheap static-reference storage in core-only builds;
-with `alloc` or `std`, its standard `Cow` backing is not covered. Owned
-`String` and `Vec` representations likewise remain unsupported.
-
-`EcoVec` cloning shares its allocation and does not clone individual elements;
-`T: Clone` is required by its upstream `Clone` implementation, but `T: CheapClone`
-is not required. `chrono::DateTime<Tz>` requires `Tz::Offset: CheapClone` and
-uses that implementation when cloning the stored offset.
-
-The `emailaddr` integration supports both `Strict` and `Relax` policies, borrowed
-storage, shared storage such as `Arc<str>`/`Rc<str>`, and the fixed-size `Buffer`.
-`P: Clone` follows the upstream derive; the policy does not need `CheapClone`.
-Cloning uses upstream `Clone` without reparsing or normalizing the address.
-`String`, `Vec`, `Box` and `Cow` storage are excluded. `Buffer` copies at most
-255 bytes of inline storage. Borrowed and stack-backed types work without
-`alloc`; enabling `alloc` or `std` also enables upstream IDNA support.
-
-The `hostaddr` integration requires **hostaddr 1.1 or newer**, which removes
-its former dependency on `cheap-clone`. Enable support here:
-
-```toml
-cheap-clone = { version = "1", features = ["hostaddr"] }
-hostaddr = "1.1"
-```
-
-When migrating, remove `features = ["cheap-clone"]` from the `hostaddr`
-dependency. That feature and the old 0.3 trait implementations have been
-removed. The 1.0 trait is distinct from 0.3; upgrade downstream trait bounds
-and dependencies together. See [the release notes](RELEASE.md).
-
-`Domain`, `Host`, and `HostAddr` preserve their validated representation when
-cloned. Borrowed and shared storage are supported, as is the fixed-size
-255-byte `Buffer`. String/Vec storage, IPC types and semantic address wrappers
-are not covered by this integration. The feature itself requires neither
-`std` nor `alloc`; these features forward upstream capabilities when enabled.
-
-Fixed-capacity arrays and containers follow the existing `[T; N]` policy:
-elements must be `Copy`, and `cheap_clone` copies them directly without invoking
-their `Clone` implementation. These integrations require neither `std` nor
-`alloc`. They copy inline storage rather than share it: fixed arrays have O(N)
-copy cost, while vectors, strings, and deques copy their occupied contents in
-O(len), bounded by the type's capacity N. **Large capacities can still be
-expensive**; enabling a feature is not a promise that every capacity is cheap.
-Heapless maps, sets, heaps, and queues are not covered by this integration.
-
-The `hipstr` integration supports only the reference-counted `Arc` and `Rc`
-backends, not `Unique`. Borrowed values and inline values are copied cheaply,
-and allocated values normally share their storage. Upstream falls back to a
-**deep copy on reference-count overflow**, so this opt-in integration does not
-promise worst-case O(1) behavior in that exceptional case.
-
-HTTP `Uri` and `Scheme` clones can allocate a fixed-size wrapper for a custom
-scheme while sharing its bytes. Their cost is O(1), but not necessarily
-allocation-free. `Method` can contain a variable-length owned extension;
-`Method` and `HeaderMap` do not implement `CheapClone`. Mutable `smol-bytes`
-`BytesMut` and `Utf8BytesMut` likewise remain unsupported.
-
-The legacy `smol_bytes_0_1` and `smol_bytes` feature names remain aliases for
-**0.1**, preserving their original meaning. The new `smol-bytes` alias selects
-**0.2**. Both versions can be enabled together. The 0.1 integration requires
-`smol-bytes >= 0.1.7`, which replaces the unmaintained `paste` dependency.
-
-## Standard library support
-
-Alongside primitives, network addresses, tuples, arrays, `Option`, and `Result`,
-the crate supports shared references to unsized values (`&str`, `&[T]`,
-`&dyn Trait`), `PhantomData<T: ?Sized>`, `PhantomPinned`, `Duration`, `Ordering`,
-and `Wrapping<T>`/`Saturating<T>` with `CheapClone` contents. With `alloc` or
-`std`, `Rc`, `Arc`, and both corresponding `Weak` types support unsized
-pointees. With `std`, `Instant` and `SystemTime` are supported as well.
 
 ## Rust version support
 
