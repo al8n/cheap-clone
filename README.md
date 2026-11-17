@@ -118,6 +118,7 @@ Integrations are opt-in. Each versioned feature has a short alias:
 | `arcstr_1` | `arcstr` | `ArcStr`, `Substr` |
 | `bytes_1` | `bytes` | Immutable `Bytes` |
 | `chrono_0_4` | `chrono` | `NaiveDate`, `NaiveTime`, `NaiveDateTime`, `DateTime<Tz>`, `TimeDelta`/`Duration`, `FixedOffset`, `Utc`, `Weekday`, `Month`, `Days`, `Months` |
+| `cower_0_1` | `cower` | `Cow<'a, T, P>` with `T::Storage<'a>: CheapClone`; `CowRepr<'a, T, P>` with `T::Owned: CheapClone` |
 | `ecow_0_3` | `ecow` | `EcoString`, `EcoBytes`, `EcoVec<T: Clone>` |
 | `either_1` | `either` | `Either<L, R>` with `CheapClone` fields |
 | `emailaddr_1` | `emailaddr` | `EmailAddr<S, P>`, `LocalPart<S>`, `DomainPart<S>` with `S: CheapClone`; `Buffer`, policies, options and parse errors; with `alloc`/`std`, also `ParseEmailAddrOutput<S, P>` |
@@ -146,9 +147,22 @@ All optional dependencies disable upstream default features. The `arcstr`
 integration enables `substr`. The `http` integration requires and enables
 `std`. Other new integrations work without `std`; shared-storage integrations
 also enable `alloc`. The `alloc` and `std` features forward the corresponding
-emailaddr, hostaddr and Jiff capabilities. Jiff's system time zone discovery and time zone
-database, Chrono's clock/local-zone features, UUID generators, and serialization
-features are left to the consuming application.
+cower, emailaddr, hostaddr and Jiff capabilities. Jiff's system time zone
+discovery and time zone database, Chrono's clock/local-zone features, UUID
+generators, and serialization features are left to the consuming application.
+
+The `cower` integration requires **cower 0.1.1 or newer in the 0.1 series**,
+which lowers its base MSRV to Rust 1.85, without requiring `std` or `alloc`.
+`Cow` delegates to its actual storage's `cheap_clone`; `CowRepr`
+preserves borrows and calls `cheap_clone` on owned values. Neither the borrowed
+type nor the policy needs to implement `Clone` or `CheapClone`.
+`StaticPolicy` works in every configuration. Custom policies using `CowRepr`
+work when their owned storage implements `CheapClone`, including `Arc`, `Rc`,
+and supported shared strings or fixed-capacity containers. Enable the relevant
+features in both crates when using cower's built-in third-party policies.
+The default policy uses cheap static-reference storage in core-only builds;
+with `alloc` or `std`, its standard `Cow` backing is not covered. Owned
+`String` and `Vec` representations likewise remain unsupported.
 
 `EcoVec` cloning shares its allocation and does not clone individual elements;
 `T: Clone` is required by its upstream `Clone` implementation, but `T: CheapClone`
@@ -220,8 +234,10 @@ pointees. With `std`, `Instant` and `SystemTime` are supported as well.
 ## Rust version support
 
 The base crate, `derive`, default configuration, `--no-default-features`, and
-`alloc` support Rust `1.85`. Non-smol canonical feature pairs are checked with
-Rust `1.89`; optional integrations follow their upstream effective MSRV.
+`alloc` support Rust `1.85`. The `cower` integration is also tested on Rust
+`1.85` in core-only, `alloc`, and `std` configurations. Non-smol canonical
+feature pairs are checked with Rust `1.89`; optional integrations follow their
+upstream effective MSRV.
 `emailaddr` itself requires Rust `1.86`; its allocating configurations and the
 `hostaddr` downstream integration fixture are checked with Rust `1.89`.
 `smol-bytes` integrations require Rust `1.95`, which is also used for the

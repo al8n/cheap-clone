@@ -1,6 +1,33 @@
 #[allow(unused_imports)]
 use crate::CheapClone;
 
+#[cfg(feature = "cower_0_1")]
+const _: () = {
+  use cower_0_1::{Cow, CowRepr, ToOwned};
+
+  // Cow delegates to its actual storage, which need not be CowRepr.
+  impl<'a, T: ?Sized + ToOwned<P>, P: ?Sized> CheapClone for Cow<'a, T, P>
+  where
+    T::Storage<'a>: CheapClone,
+  {
+    fn cheap_clone(&self) -> Self {
+      Self::from_storage(self.as_storage().cheap_clone())
+    }
+  }
+
+  impl<T: ?Sized + ToOwned<P>, P: ?Sized> CheapClone for CowRepr<'_, T, P>
+  where
+    T::Owned: CheapClone,
+  {
+    fn cheap_clone(&self) -> Self {
+      match self {
+        Self::Borrowed(value) => Self::Borrowed(value),
+        Self::Owned(value) => Self::Owned(value.cheap_clone()),
+      }
+    }
+  }
+};
+
 #[cfg(feature = "hostaddr_1")]
 const _: () = {
   // Clone preserves the validated domain representation without reparsing it.

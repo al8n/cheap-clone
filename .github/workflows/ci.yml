@@ -47,6 +47,11 @@ jobs:
           cargo +1.85.0 check --features derive
           cargo +1.85.0 check --no-default-features --features derive
           cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace
+      - name: Test cower on the base MSRV
+        run: |
+          cargo +1.85.0 test --no-default-features --features cower_0_1 --test cower
+          cargo +1.85.0 test --no-default-features --features alloc,cower --test cower
+          cargo +1.85.0 test --features cower,derive --test cower
 
   feature-powerset:
     name: feature powerset
@@ -57,10 +62,10 @@ jobs:
         run: rustup toolchain install 1.89.0 --profile minimal --no-self-update
       - name: Install cargo-hack
         run: cargo +stable install --locked cargo-hack --version 0.6.39
-      - name: Check non-smol canonical feature pairs
+      - name: Check Rust 1.89 canonical feature pairs
         run: >-
           cargo +1.89.0 hack check --feature-powerset --depth 2
-          --exclude-features among,arcstr,bytes,chrono,ecow,either,emailaddr,faststr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,http,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,smol_str,time,triomphe,uuid,smol-bytes_0_1,smol-bytes_0_2,smol-bytes,smol_bytes_0_1,smol_bytes
+          --exclude-features among,arcstr,bytes,chrono,cower,ecow,either,emailaddr,faststr,generic-array,generic-arraydeque,heapless,hipstr,hostaddr,http,hybrid-array,hybrid-arraydeque,jiff,rust_decimal,smol_str,time,triomphe,uuid,smol-bytes_0_1,smol-bytes_0_2,smol-bytes,smol_bytes_0_1,smol_bytes
       - name: Check address integrations
         run: |
           cargo +1.89.0 test --no-default-features --features emailaddr --test emailaddr
@@ -130,6 +135,8 @@ jobs:
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features alloc
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features derive
           cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace --target thumbv7em-none-eabi
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features cower
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features alloc,cower
       - name: Check smol-bytes configurations
         run: |
           cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol-bytes_0_1

@@ -8,6 +8,9 @@ types that can explicitly promise cheap cloning.
   path can be overridden for renamed dependencies and facade re-exports.
 - Optional, versioned integrations cover shared strings and bytes, date/time
   values, UUIDs, decimals, HTTP values, and fixed-capacity containers.
+- Add `cower` 0.1.1+ support through `cower_0_1` or `cower`: `Cow` requires cheap
+  backing storage, and `CowRepr` requires a cheap owned representation. This
+  integration supports Rust 1.85 in core-only, alloc, and std configurations.
 - Add `emailaddr` 1.x support for cheap storage, stack buffers, parsing policies
   and results. Add `hostaddr` 1.1+ support for `Domain`, `Host`, `HostAddr` and
   `Buffer` through `hostaddr_1` or its `hostaddr` alias.
