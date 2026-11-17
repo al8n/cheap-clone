@@ -1,0 +1,6 @@
+[workspace]
+members = ["renamed"]
+resolver = "2"
+
+[workspace.dependencies]
+renamed = { package = "cheap-clone", path = "../..", default-features = false, features = ["derive"] }

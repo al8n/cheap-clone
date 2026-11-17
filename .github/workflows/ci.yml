@@ -41,6 +41,9 @@ jobs:
           cargo +1.85.0 check
           cargo +1.85.0 check --no-default-features
           cargo +1.85.0 check --no-default-features --features alloc
+          cargo +1.85.0 check --features derive
+          cargo +1.85.0 check --no-default-features --features derive
+          cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace
 
   feature-powerset:
     name: feature powerset
@@ -86,9 +89,10 @@ jobs:
       - name: Run tests
         run: |
           cargo test
-          cargo test --all-features
+          cargo test --workspace --all-features
+          cargo test --no-default-features --features derive
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   bare-metal:
     name: bare metal
@@ -105,6 +109,8 @@ jobs:
         run: |
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features
           cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features alloc
+          cargo +1.85.0 check --target thumbv7em-none-eabi --no-default-features --features derive
+          cargo +1.85.0 check --manifest-path tests/fixtures/Cargo.toml --workspace --target thumbv7em-none-eabi
       - name: Check smol-bytes configurations
         run: |
           cargo +1.95.0 check --target thumbv7em-none-eabi --no-default-features --features smol_bytes_0_1
@@ -118,9 +124,9 @@ jobs:
       - name: Install Rust 1.95
         run: rustup toolchain install 1.95.0 --profile minimal --no-self-update
       - name: Run doctests
-        run: cargo +1.95.0 test --all-features --doc
+        run: cargo +1.95.0 test --workspace --all-features --doc
       - name: Build documentation
-        run: cargo +1.95.0 doc --all-features --no-deps
+        run: cargo +1.95.0 doc --workspace --all-features --no-deps
 
   release-readiness:
     name: semver and package
@@ -140,6 +146,6 @@ jobs:
       - name: Check dependency advisories
         run: cargo +1.95.0 deny --all-features check advisories
       - name: Package crate
-        run: cargo +1.95.0 package --all-features
+        run: cargo +1.95.0 package --workspace --all-features
       - name: Validate publish
-        run: cargo +1.95.0 publish --dry-run --all-features
+        run: cargo +1.95.0 publish --workspace --dry-run --all-features

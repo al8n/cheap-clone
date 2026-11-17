@@ -23,6 +23,65 @@ A trait which indicates that such type can be cloned cheaply.
 cheap-clone = "0.3"
 ```
 
+## Deriving `CheapClone`
+
+Enable the optional `derive` feature:
+
+```toml
+[dependencies]
+cheap-clone = { version = "0.3", features = ["derive"] }
+```
+
+```rust
+#[derive(Clone, cheap_clone::CheapClone)]
+#[cheap_clone(inherent)]
+struct Message {
+  id: u64,
+  body: std::sync::Arc<str>,
+  #[cheap_clone(with = "crate::clone_tag")]
+  tag: Tag,
+}
+
+// An external type need not implement CheapClone when a custom function is used.
+#[derive(Clone, Copy)]
+struct Tag(u8);
+
+fn clone_tag(tag: &Tag) -> Tag {
+  *tag
+}
+```
+
+The derive generates `CheapClone` by calling each field's `CheapClone` trait
+method using a fully qualified path. It does not generate `Clone`; derive or
+implement that separately. It supports structs and enums, including lifetimes,
+const generics, and existing `where` clauses. Unions and packed types are rejected.
+
+| Attribute | Location | Behavior |
+| --- | --- | --- |
+| `#[cheap_clone(inherent)]` | Type | Also generates a public `cheap_clone()` method forwarding to the trait. Callers do not need to import the trait. |
+| `#[cheap_clone(with = "path::to::function")]` | Field | Calls the function with `&FieldType` and expects `FieldType` in return. Omits this field's automatic `CheapClone` bound. |
+| `#[cheap_clone(crate = "::renamed_crate")]` | Type | Overrides the automatically detected dependency path, for example when using a facade. The path must expose `__private::CheapClone`. |
+
+The `with` attribute works on named and tuple fields in structs and enum
+variants. Function paths may include generic arguments or qualified associated
+functions, such as `crate::copy_value::<T>` or `<T as crate::Trait>::copy_value`.
+Paths are resolved where the derive is used; use `crate::`, `super::`, or `::`
+as appropriate. A custom function is responsible for preserving the field's
+value and being cheap to call. It takes precedence even when the field already
+implements `CheapClone`.
+
+Bounds apply to each field's complete type. For example, an `Arc<T>` field
+requires `Arc<T>: CheapClone`, not `T: CheapClone`. The type must also implement
+`Clone`; Rust's built-in `#[derive(Clone)]` can introduce extra generic bounds,
+so a manual `Clone` implementation may be preferable for generic wrappers.
+
+Inherent methods are opt-in. Without `#[cheap_clone(inherent)]`, import
+`cheap_clone::CheapClone` or use `cheap_clone::CheapClone::cheap_clone(&value)`.
+Generated trait paths go through `::cheap_clone::__private::CheapClone`, using
+the detected dependency name when renamed in Cargo.toml. The `derive` feature
+works with `default-features = false`, without requiring `std` or `alloc` in
+the consuming crate, and supports Rust `1.85`.
+
 ## Optional `smol-bytes` integration
 
 Enable `smol_bytes_0_1` (or its `smol_bytes` alias) to implement

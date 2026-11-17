@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
 
           expected_version="0.3.2"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[0].version')"
+          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
           if [[ "${package_version}" != "${expected_version}" ]]; then
             echo "::error::Expected package version ${expected_version}, found ${package_version}" >&2
             exit 1
@@ -81,9 +81,9 @@ jobs:
       - name: Check dependency advisories
         run: cargo +1.95.0 deny --all-features check advisories
       - name: Package crate
-        run: cargo +1.95.0 package --all-features
+        run: cargo +1.95.0 package --workspace --all-features
       - name: Validate publish
-        run: cargo +1.95.0 publish --dry-run --all-features
+        run: cargo +1.95.0 publish --workspace --dry-run --all-features
 
   publish:
     name: publish crate
@@ -104,7 +104,7 @@ jobs:
           set -euo pipefail
 
           expected_version="0.3.2"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[0].version')"
+          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
           if [[ "${package_version}" != "${expected_version}" || "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
             echo "::error::Release tag and package version do not match v${expected_version}" >&2
             exit 1
@@ -125,7 +125,7 @@ jobs:
           set -euo pipefail
 
           package_name="cheap-clone"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[0].version')"
+          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
           encoded_version="$(jq -rn --arg version "${package_version}" '$version | @uri')"
           response_file="$(mktemp "${RUNNER_TEMP}/crates-io-cheap-clone.XXXXXX.json")"
           trap 'rm -f "${response_file}"' EXIT
