@@ -205,7 +205,8 @@ allocation-free. `Method` can contain a variable-length owned extension;
 
 The legacy `smol_bytes_0_1` and `smol_bytes` feature names remain aliases for
 **0.1**, preserving their original meaning. The new `smol-bytes` alias selects
-**0.2**. Both versions can be enabled together.
+**0.2**. Both versions can be enabled together. The 0.1 integration requires
+`smol-bytes >= 0.1.7`, which replaces the unmaintained `paste` dependency.
 
 ## Standard library support
 

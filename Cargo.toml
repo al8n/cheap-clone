@@ -161,7 +161,9 @@ rust_decimal_1 = { package = "rust_decimal", version = "1", default-features = f
 smol_str_0_3 = { package = "smol_str", version = "0.3", default-features = false, optional = true }
 smol_str_0_2 = { package = "smol_str", version = "0.2", default-features = false, optional = true }
 
-smol-bytes_0_1 = { package = "smol-bytes", version = "0.1", default-features = false, optional = true }
+# Earlier releases use unmaintained paste; resolver 3 would otherwise prefer 0.1.3
+# for this crate's base MSRV, even when building with a newer toolchain.
+smol-bytes_0_1 = { package = "smol-bytes", version = "0.1.7", default-features = false, optional = true }
 smol-bytes_0_2 = { package = "smol-bytes", version = "0.2", default-features = false, optional = true }
 
 time_0_3 = { package = "time", version = "0.3.55", default-features = false, optional = true }

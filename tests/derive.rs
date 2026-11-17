@@ -140,11 +140,12 @@ fn custom_function_overrides_existing_cheap_clone_and_runs_once() {
   assert_eq!(cheap_calls.get(), 10);
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+// Exercise custom clone callbacks on a Clone-only type without CheapClone.
+#[derive(Clone, Debug, PartialEq)]
 struct Foreign(u8);
 
 fn clone_foreign(value: &Foreign) -> Foreign {
-  *value
+  Foreign(value.0)
 }
 
 #[derive(Clone, Debug, PartialEq, cheap_clone::CheapClone)]
@@ -237,7 +238,7 @@ impl<T: Source> Clone for Associated<T> {
 
 #[test]
 fn generics_lifetimes_const_generics_and_associated_types() {
-  assert_eq!(GenericCustom(Foreign(1)).cheap_clone().0, Foreign(1));
+  assert_eq!(GenericCustom(1u8).cheap_clone().0, 1);
   let name = String::from("packet");
   let packet = Packet {
     name: &name,
