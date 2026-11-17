@@ -1,5 +1,7 @@
 name: Release
 
+# Both crates use the same Trusted Publisher: al8n/cheap-clone,
+# workflow release.yml, environment crates-io. See ../RELEASING.md.
 on:
   push:
     tags:
@@ -25,6 +27,9 @@ jobs:
   validate-and-dry-run:
     name: validate and publish dry run
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Install Rust 1.95
@@ -41,9 +46,11 @@ jobs:
           set -euo pipefail
 
           expected_version="1.0.0"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
-          if [[ "${package_version}" != "${expected_version}" ]]; then
-            echo "::error::Expected package version ${expected_version}, found ${package_version}" >&2
+          metadata="$(cargo +1.95.0 metadata --no-deps --format-version=1)"
+          package_version="$(jq -er '.packages[] | select(.name == "cheap-clone") | .version' <<<"${metadata}")"
+          derive_version="$(jq -er '.packages[] | select(.name == "cheap-clone-derive") | .version' <<<"${metadata}")"
+          if [[ "${package_version}" != "${expected_version}" || "${derive_version}" != "${expected_version}" ]]; then
+            echo "::error::Both crates must be ${expected_version}; found cheap-clone ${package_version}, cheap-clone-derive ${derive_version}" >&2
             exit 1
           fi
 
@@ -74,19 +81,40 @@ jobs:
               exit 1
               ;;
           esac
+      - name: Require successful CI for the release commit
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          runs="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+            -f head_sha="${GITHUB_SHA}" -f branch=main -f status=success -f per_page=100)"
+          if ! jq -e --arg sha "${GITHUB_SHA}" '
+            any(.workflow_runs[];
+              .head_sha == $sha and .head_branch == "main"
+              and .conclusion == "success"
+              and (.event == "push" or .event == "workflow_dispatch"))
+          ' <<<"${runs}" >/dev/null; then
+            echo "::error::CI must pass on main for this exact release commit before publishing" >&2
+            exit 1
+          fi
       - name: Check semver compatibility
         run: >-
           cargo +1.95.0 semver-checks check-release
           --baseline-version 0.3.1 --release-type major --all-features
       - name: Check dependency advisories
         run: cargo +1.95.0 deny --all-features check advisories
+      - name: Test both crates
+        run: cargo +1.95.0 test --workspace --all-features
       - name: Package crate
         run: cargo +1.95.0 package --workspace --all-features
       - name: Validate publish
         run: cargo +1.95.0 publish --workspace --dry-run --all-features
 
   publish:
-    name: publish crate
+    name: publish both crates
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     needs: validate-and-dry-run
     runs-on: ubuntu-latest
@@ -104,9 +132,11 @@ jobs:
           set -euo pipefail
 
           expected_version="1.0.0"
-          package_version="$(cargo +1.95.0 metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "cheap-clone") | .version')"
-          if [[ "${package_version}" != "${expected_version}" || "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
-            echo "::error::Release tag and package version do not match v${expected_version}" >&2
+          metadata="$(cargo +1.95.0 metadata --no-deps --format-version=1)"
+          package_version="$(jq -er '.packages[] | select(.name == "cheap-clone") | .version' <<<"${metadata}")"
+          derive_version="$(jq -er '.packages[] | select(.name == "cheap-clone-derive") | .version' <<<"${metadata}")"
+          if [[ "${package_version}" != "${expected_version}" || "${derive_version}" != "${expected_version}" || "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
+            echo "::error::Release tag and both crate versions must match v${expected_version}" >&2
             exit 1
           fi
 

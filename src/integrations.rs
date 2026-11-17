@@ -206,35 +206,6 @@ impl_cheap_clone_for_copy!(
   time_0_3::Weekday,
 );
 
-#[cfg(feature = "chrono_0_4")]
-const _: () = {
-  use chrono_0_4::{DateTime, TimeZone};
-
-  impl_cheap_clone_for_copy!(
-    chrono_0_4::NaiveDate,
-    chrono_0_4::NaiveTime,
-    chrono_0_4::NaiveDateTime,
-    chrono_0_4::TimeDelta,
-    chrono_0_4::FixedOffset,
-    chrono_0_4::Utc,
-    chrono_0_4::Weekday,
-    chrono_0_4::Month,
-    chrono_0_4::Days,
-    chrono_0_4::Months,
-  );
-
-  // A custom time zone may have an expensive Offset. Bound and clone the
-  // stored offset, not the TimeZone marker type.
-  impl<Tz: TimeZone> CheapClone for DateTime<Tz>
-  where
-    Tz::Offset: CheapClone,
-  {
-    fn cheap_clone(&self) -> Self {
-      Self::from_naive_utc_and_offset(self.naive_utc(), self.offset().cheap_clone())
-    }
-  }
-};
-
 #[cfg(feature = "jiff_1")]
 const _: () = {
   impl_cheap_clone_for_copy!(
