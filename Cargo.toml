@@ -1,17 +1,17 @@
 [package]
 name = "cheap-clone"
-version = "0.3.2"
-edition = "2021"
+version = "1.0.0"
+edition = "2024"
 repository = "https://github.com/al8n/cheap-clone"
 documentation = "https://docs.rs/cheap-clone"
-description = "A trait which indicates that such type can be cloned cheaply."
+description = "A trait which indicates that such a type can be cloned cheaply."
 license = "MIT OR Apache-2.0"
 rust-version = "1.85.0"
 
 [workspace]
 members = ["cheap-clone-derive"]
 exclude = ["tests/fixtures"]
-resolver = "2"
+resolver = "3"
 
 [features]
 default = ["std"]
@@ -46,7 +46,7 @@ triomphe = ["triomphe_0_1"]
 
 [dependencies]
 cheap-clone-derive = { version = "0.1", path = "cheap-clone-derive", optional = true }
-paste = { package = "pastey", version = "0.2.3" }
+paste = { package = "pastey", version = "0.2" }
 seq-macro = "0.3"
 
 among_1 = { package = "among", version = "1", default-features = false, optional = true }
